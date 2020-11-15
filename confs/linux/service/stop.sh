@@ -14,5 +14,4 @@ if [ "$(echo "$unamestr" | grep ubuntu)" != "" ]; then
   systemctl daemon-reload
   type="ubuntu"
 fi
-sh ${scriptDir}/../nat/rule.sh clean
 echo "proxies service stop success in $type!"

@@ -7,5 +7,4 @@ fi
 if [ -f "${scriptDir}/com.codesgeeking.proxies.plist" ];then
   launchctl unload ${scriptDir}/com.codesgeeking.proxies.plist
 fi
-sh ${scriptDir}/../nat/rule.sh clean
 echo "proxies service stop success!"
