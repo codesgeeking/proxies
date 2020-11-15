@@ -105,7 +105,6 @@ void Session::start() {
                                 distEnd += "v6:";
                                 readAddrSzie(16 + lens, false);
                             } else {
-
                                 Logger::ERROR << "unkown sock5 client domain type" << END;
                                 shutdown();
                             }
@@ -121,8 +120,9 @@ void Session::start() {
 void Session::closeClient(std::function<void()> completeHandler) {
     if (clientSock.is_open()) {
         boost::system::error_code ec;
-        clientSock.release(ec);
         clientSock.shutdown(boost::asio::socket_base::shutdown_both, ec);
+        clientSock.cancel(ec);
+        clientSock.release(ec);
         clientSock.close(ec);
     }
     completeHandler();
@@ -134,6 +134,9 @@ void Session::closeServer(std::function<void()> completeHandler) {
         proxySock.async_shutdown([=](const boost::system::error_code &error) {
             boost::system::error_code ec;
             Logger::traceId = this->id;
+            proxySock.next_layer().shutdown(boost::asio::socket_base::shutdown_both, ec);
+            proxySock.next_layer().cancel(ec);
+            proxySock.next_layer().release(ec);
             proxySock.next_layer().close(ec);
             completeHandler();
         });

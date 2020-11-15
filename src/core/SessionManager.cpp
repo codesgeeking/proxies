@@ -97,7 +97,6 @@ void SessionManager::monitorSession() {
             if (speeds.find(tunnelId) == speeds.end()) { speeds[tunnelId] = {0, 0}; }
             speeds[tunnelId].first += session->readTunnelTime;
             speeds[tunnelId].second += session->readTunnelSize + session->writeTunnelSize;
-
             bool noRead = session->lastReadTunnelTime == 0
                                   ? (now - session->begin >= timout)
                                   : (now - session->lastReadTunnelTime >= timout);
