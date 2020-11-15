@@ -2,8 +2,8 @@
 // Created by codesgeeking on 2020/6/30.
 //
 
-#ifndef TROJANX_CONFIG_H
-#define TROJANX_CONFIG_H
+#ifndef PROXIES_CONFIG_H
+#define PROXIES_CONFIG_H
 
 #include "StreamTunnel.h"
 #include "Utils.h"
@@ -77,4 +77,4 @@ namespace proxies {
 }// namespace proxies
 
 
-#endif//TROJANX_CONFIG_H
+#endif//PROXIES_CONFIG_H

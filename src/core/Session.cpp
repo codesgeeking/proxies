@@ -9,7 +9,7 @@
 #endif
 
 
-#include "TCPSession.h"
+#include "Session.h"
 #include <vector>
 static uint8_t PACKAT_01[3] = {0x05, 0x01, 0x00};
 static uint8_t PACKAT_02[3] = {0x05, 0x01, 0x00};
@@ -17,7 +17,7 @@ static uint8_t SEND_PACKAT_01[2] = {0x05, 0x00};
 static uint8_t SEND_PACKAT_02[10] = {0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 static mutex stageLock;
 
-string TCPSession::parseDist(int addrTotalSize, bool domain) {
+string Session::parseDist(int addrTotalSize, bool domain) {
     string dist = "";
     for (int i = 0; i < addrTotalSize - 2; i++) {
         if (domain) {
@@ -33,7 +33,7 @@ string TCPSession::parseDist(int addrTotalSize, bool domain) {
     dist += to_string(port);
     return dist;
 }
-TCPSession::TCPSession(uint64_t id, tcp::socket &sock, proxies::Config &config,
+Session::Session(uint64_t id, tcp::socket &sock, proxies::Config &config,
                        StreamTunnel *tunnel)
     : id(id), begin(proxies::utils::now()), connectedTunnel(tunnel), clientSock(std::move(sock)),
       config(config), sslCtx(boost::asio::ssl::context::sslv23_client),
@@ -41,7 +41,7 @@ TCPSession::TCPSession(uint64_t id, tcp::socket &sock, proxies::Config &config,
       downStrand((io_context &) clientSock.get_executor().context()),
       upStrand((io_context &) clientSock.get_executor().context()) {}
 
-void TCPSession::start() {
+void Session::start() {
     boost::system::error_code error;
     clientEnd = clientSock.remote_endpoint(error);
     copyBytes(connectedTunnel->passwordSHA224 + "\r\n", 0, writeProxyBuffer, 0, 58);
@@ -119,7 +119,7 @@ void TCPSession::start() {
 }
 
 
-void TCPSession::closeClient(std::function<void()> completeHandler) {
+void Session::closeClient(std::function<void()> completeHandler) {
     if (clientSock.is_open()) {
         boost::system::error_code ec;
         clientSock.release(ec);
@@ -128,7 +128,7 @@ void TCPSession::closeClient(std::function<void()> completeHandler) {
     }
     completeHandler();
 }
-void TCPSession::closeServer(std::function<void()> completeHandler) {
+void Session::closeServer(std::function<void()> completeHandler) {
     if (proxySock.next_layer().is_open()) {
         boost::system::error_code ec;
         proxySock.next_layer().shutdown(boost::asio::socket_base::shutdown_both, ec);
@@ -143,7 +143,7 @@ void TCPSession::closeServer(std::function<void()> completeHandler) {
     }
 }
 
-void TCPSession::shutdown() {
+void Session::shutdown() {
     stageLock.lock();
     if (stage == CONNECTING || stage == CONNECTED) {
         long begin = proxies::utils::now();
@@ -161,13 +161,13 @@ void TCPSession::shutdown() {
     }
 }
 
-void TCPSession::readClient() {
+void Session::readClient() {
     readClientMax("readClient", bufferSize, [=](size_t size) {
         copyBytes(this->readClientBuffer, this->writeProxyBuffer, size);
         writeProxy(size);
     });
 }
-void TCPSession::readClientMax(const string &tag, size_t maxSize,
+void Session::readClientMax(const string &tag, size_t maxSize,
                                std::function<void(size_t size)> completeHandler) {
     clientSock.async_read_some(buffer(readClientBuffer, sizeof(uint8_t) * maxSize),
                                upStrand.wrap([=](boost::system::error_code error, size_t size) {
@@ -179,7 +179,7 @@ void TCPSession::readClientMax(const string &tag, size_t maxSize,
                                    }
                                }));
 }
-void TCPSession::readClient(const string &tag, size_t size, std::function<void()> completeHandler) {
+void Session::readClient(const string &tag, size_t size, std::function<void()> completeHandler) {
     clientSock.async_receive(buffer(readClientBuffer, sizeof(uint8_t) * size),
                              upStrand.wrap([=](boost::system::error_code error, size_t size) {
                                  Logger::traceId = this->id;
@@ -190,7 +190,7 @@ void TCPSession::readClient(const string &tag, size_t size, std::function<void()
                                  }
                              }));
 }
-void TCPSession::readProxy() {
+void Session::readProxy() {
     long begin = proxies::utils::now();
     proxySock.async_read_some(buffer(readProxyBuffer, sizeof(uint8_t) * bufferSize),
                               downStrand.wrap([=](boost::system::error_code error, size_t size) {
@@ -208,18 +208,18 @@ void TCPSession::readProxy() {
                               }));
 }
 
-void TCPSession::processError(const boost::system::error_code &error, const string &TAG) {
+void Session::processError(const boost::system::error_code &error, const string &TAG) {
     bool isEOF = error.category() == error::misc_category && error == error::misc_errors::eof;
     bool isCancled = error == error::operation_aborted;
     if (!isCancled && !isEOF) { Logger::ERROR << TAG << error.message() << END; }
     shutdown();
 }
 
-void TCPSession::writeProxy(size_t writeSize) {
+void Session::writeProxy(size_t writeSize) {
     writeProxy("writeProxy", writeSize, [=]() { readClient(); });
 }
 
-void TCPSession::writeProxy(const string &tag, size_t writeSize,
+void Session::writeProxy(const string &tag, size_t writeSize,
                             std::function<void()> completeHandler) {
     long begin = proxies::utils::now();
     size_t len = sizeof(uint8_t) * writeSize;
@@ -239,7 +239,7 @@ void TCPSession::writeProxy(const string &tag, size_t writeSize,
                              }));
 }
 
-void TCPSession::connectProxy(std::function<void()> completeHandler) {
+void Session::connectProxy(std::function<void()> completeHandler) {
     tcp::endpoint serverEndpoint(make_address_v4(connectedTunnel->remoteIP),
                                  connectedTunnel->remotePort);
     proxySock.lowest_layer().async_connect(serverEndpoint, [=](boost::system::error_code error) {
@@ -250,7 +250,7 @@ void TCPSession::connectProxy(std::function<void()> completeHandler) {
         }
     });
 }
-void TCPSession::handshakeProxy(std::function<void()> completeHandler) {
+void Session::handshakeProxy(std::function<void()> completeHandler) {
     proxySock.async_handshake(boost::asio::ssl::stream_base::client,
                               [=](boost::system::error_code error) {
                                   if (!error) {
@@ -261,11 +261,11 @@ void TCPSession::handshakeProxy(std::function<void()> completeHandler) {
                               });
 }
 
-void TCPSession::writeClient(size_t writeSize) {
+void Session::writeClient(size_t writeSize) {
     writeClient(__PRETTY_FUNCTION__, writeSize, [=]() { readProxy(); });
 }
 
-void TCPSession::writeClient(const string &tag, size_t writeSize,
+void Session::writeClient(const string &tag, size_t writeSize,
                              std::function<void()> completeHandler) {
     size_t len = sizeof(uint8_t) * writeSize;
     boost::asio::async_write(clientSock, buffer(writeClientBuffer, len),
@@ -281,18 +281,20 @@ void TCPSession::writeClient(const string &tag, size_t writeSize,
                              }));
 }
 
-TCPSession::~TCPSession() {
+Session::~Session() {
     Logger::traceId = id;
     Logger::INFO << "disconnect" << toString() << transmit() << END;
 }
 
-string TCPSession::toString() {
+string Session::toString() {
     return proxies::utils::asio::addrStr(clientEnd) + " -> " + distEnd + " " +
            connectedTunnel->remoteAddr;
 }
 
-string TCPSession::transmit() const {
+string Session::transmit() const {
     const uint64_t val = proxies::utils::now() - this->begin;
-    return "live:" + to_string(val) + ", read:" + to_string(this->readTunnelSize) +
+    return to_string(id) + " live:" + to_string(live()) +
+           ", read:" + to_string(this->readTunnelSize) +
            ", write:" + to_string(this->writeTunnelSize);
 }
+int Session::live() const { return proxies::utils::now() - this->begin; }

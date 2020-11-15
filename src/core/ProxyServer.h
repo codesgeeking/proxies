@@ -2,8 +2,8 @@
 // Created by codesgeeking on 2020/6/30.
 //
 
-#ifndef TROJANX_PROXYSERVER_H
-#define TROJANX_PROXYSERVER_H
+#ifndef PROXIES_PROXYSERVER_H
+#define PROXIES_PROXYSERVER_H
 
 #include "Config.h"
 #include "Utils.h"
@@ -31,4 +31,4 @@ private:
 };
 
 
-#endif//TROJANX_PROXYSERVER_H
+#endif//PROXIES_PROXYSERVER_H

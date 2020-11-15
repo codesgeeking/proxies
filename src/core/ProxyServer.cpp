@@ -5,7 +5,7 @@
 
 #include <boost/process.hpp>
 
-#include "TCPSessionManager.h"
+#include "SessionManager.h"
 #include "Utils.h"
 #include <openssl/evp.h>
 
@@ -72,20 +72,17 @@ bool resolveRemoteAddr(StreamTunnel *tunnel) {
 ProxyServer::ProxyServer(Config &config) : config(config) {
     try {
 
-        for (auto it = config.tunnels.begin(); it != config.tunnels.end();
-             it++) {
+        for (auto it = config.tunnels.begin(); it != config.tunnels.end(); it++) {
             auto tunnel = *it;
-            if (!resolveRemoteAddr(tunnel)) {
-                exit(1);
-            }
+            if (!resolveRemoteAddr(tunnel)) { exit(1); }
             tunnel->passwordSHA224 = SHA224(tunnel->password);
             ip::tcp::acceptor *serverAcceptor = new ip::tcp::acceptor(
-                    ioContext, tcp::endpoint(boost::asio::ip::make_address_v4(
-                                                     tunnel->localAddr),
+                    ioContext, tcp::endpoint(boost::asio::ip::make_address_v4(tunnel->localAddr),
                                              tunnel->localPort));
             boost::asio::ip::tcp::acceptor::keep_alive option(true);
             serverAcceptor->set_option(option);
-            Logger::INFO << tunnel->remoteAddr << tunnel->remoteIP << "listen at" << tunnel->localPort << END;
+            Logger::INFO << tunnel->remoteAddr << tunnel->remoteIP << "listen at"
+                         << tunnel->localPort << END;
 
             this->serverAcceptors.emplace(make_pair(tunnel->id(), serverAcceptor));
         }
@@ -110,25 +107,19 @@ void ProxyServer::start() {
         });
     }
     Logger::INFO << "proxies server started" << END;
-    for (auto &th : threads) {
-        th.join();
-    }
+    for (auto &th : threads) { th.join(); }
     Logger::INFO << "proxies end" << END;
 }
 
 void ProxyServer::accept(StreamTunnel *tunnel) {
     tcp::socket rSocket(ioContext);
     auto acceptor = serverAcceptors[tunnel->id()];
-    acceptor->async_accept([=](boost::system::error_code error,
-                               boost::asio::ip::tcp::socket socket) {
-        // Check whether the server was stopped by a signal before this
-        // completion handler had a chance to run.
-        if (!acceptor->is_open()) {
-            return;
-        }
-        if (!error) {
-            TCPSessionManager::INSTANCE->addNewSession(socket, config, tunnel);
-        }
-        accept(tunnel);
-    });
+    acceptor->async_accept(
+            [=](boost::system::error_code error, boost::asio::ip::tcp::socket socket) {
+                // Check whether the server was stopped by a signal before this
+                // completion handler had a chance to run.
+                if (!acceptor->is_open()) { return; }
+                if (!error) { SessionManager::INSTANCE->addNewSession(socket, config, tunnel); }
+                accept(tunnel);
+            });
 }

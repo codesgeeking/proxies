@@ -2,19 +2,19 @@
 // Created by codesgeeking on 2020/9/17.
 //
 
-#ifndef TROJANX_TCPSESSION_H
-#define TROJANX_TCPSESSION_H
+#ifndef PROXIES_SESSION_H
+#define PROXIES_SESSION_H
 
 #include "Common.h"
 
-class TCPSession {
+class Session {
 public:
     enum STAGE { CONNECTING, CONNECTED, DETROYING, DETROYED };
     static const uint32_t bufferSize = 1024;
 
-    TCPSession(uint64_t id, tcp::socket &sock, proxies::Config &config, StreamTunnel *tunnel);
+    Session(uint64_t id, tcp::socket &sock, proxies::Config &config, StreamTunnel *tunnel);
 
-    virtual ~TCPSession();
+    virtual ~Session();
 
     uint64_t id;
     uint16_t port = 0;
@@ -34,6 +34,7 @@ public:
 
     string toString();
     string transmit() const;
+    int live() const;
 
 private:
     tcp::socket clientSock;
@@ -83,4 +84,4 @@ private:
 #endif
     };
 
-#endif// TROJANX_TCPSESSION_H
+#endif// PROXIES_SESSION_H

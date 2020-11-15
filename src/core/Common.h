@@ -2,8 +2,8 @@
 // Created by codesgeeking on 2020/10/5.
 //
 
-#ifndef TROJANX_COMMON_H
-#define TROJANX_COMMON_H
+#ifndef PROXIES_COMMON_H
+#define PROXIES_COMMON_H
 
 #include "Config.h"
 #include "Utils.h"
@@ -15,4 +15,4 @@ using namespace boost::asio::ip;
 using namespace std;
 using namespace boost::asio;
 
-#endif //TROJANX_COMMON_H
+#endif //PROXIES_COMMON_H
