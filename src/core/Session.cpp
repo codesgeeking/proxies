@@ -23,7 +23,7 @@ string Session::parseDist(int addrTotalSize, bool domain) {
         if (domain) {
             dist += ((char) readClientBuffer[i]);
         } else {
-            dist += to_string(readClientBuffer[i]);
+            dist += to_string(readClientBuffer[i]) + ".";
         }
     };
     dist += ":";
@@ -33,8 +33,7 @@ string Session::parseDist(int addrTotalSize, bool domain) {
     dist += to_string(port);
     return dist;
 }
-Session::Session(uint64_t id, tcp::socket &sock, proxies::Config &config,
-                       StreamTunnel *tunnel)
+Session::Session(uint64_t id, tcp::socket &sock, proxies::Config &config, StreamTunnel *tunnel)
     : id(id), begin(proxies::utils::now()), connectedTunnel(tunnel), clientSock(std::move(sock)),
       config(config), sslCtx(boost::asio::ssl::context::sslv23_client),
       proxySock(clientSock.get_executor(), sslCtx),
@@ -168,7 +167,7 @@ void Session::readClient() {
     });
 }
 void Session::readClientMax(const string &tag, size_t maxSize,
-                               std::function<void(size_t size)> completeHandler) {
+                            std::function<void(size_t size)> completeHandler) {
     clientSock.async_read_some(buffer(readClientBuffer, sizeof(uint8_t) * maxSize),
                                upStrand.wrap([=](boost::system::error_code error, size_t size) {
                                    Logger::traceId = this->id;
@@ -220,7 +219,7 @@ void Session::writeProxy(size_t writeSize) {
 }
 
 void Session::writeProxy(const string &tag, size_t writeSize,
-                            std::function<void()> completeHandler) {
+                         std::function<void()> completeHandler) {
     long begin = proxies::utils::now();
     size_t len = sizeof(uint8_t) * writeSize;
     boost::asio::async_write(proxySock, buffer(writeProxyBuffer, len),
@@ -266,7 +265,7 @@ void Session::writeClient(size_t writeSize) {
 }
 
 void Session::writeClient(const string &tag, size_t writeSize,
-                             std::function<void()> completeHandler) {
+                          std::function<void()> completeHandler) {
     size_t len = sizeof(uint8_t) * writeSize;
     boost::asio::async_write(clientSock, buffer(writeClientBuffer, len),
                              boost::asio::transfer_at_least(len),
