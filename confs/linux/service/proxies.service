@@ -1,0 +1,9 @@
+[Unit]
+Description=proxies
+
+[Service]
+ExecStart=/bin/sh -c "/usr/local/bin/proxies -c /usr/local/etc/proxies >/tmp/proxies.log 2>/tmp/proxies.error"
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
