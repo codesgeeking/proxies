@@ -37,6 +37,7 @@ public:
     int live() const;
 
 private:
+    mutex stageLock;
     tcp::socket clientSock;
     proxies::Config &config;
     boost::asio::ssl::context sslCtx;
@@ -79,9 +80,9 @@ private:
 
 #ifdef linux
 
-        void setMark();
+    void setMark();
 
 #endif
-    };
+};
 
 #endif// PROXIES_SESSION_H

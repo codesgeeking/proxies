@@ -15,7 +15,6 @@ static uint8_t PACKAT_01[3] = {0x05, 0x01, 0x00};
 static uint8_t PACKAT_02[3] = {0x05, 0x01, 0x00};
 static uint8_t SEND_PACKAT_01[2] = {0x05, 0x00};
 static uint8_t SEND_PACKAT_02[10] = {0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-static mutex stageLock;
 
 string Session::parseDist(int addrTotalSize, bool domain) {
     string dist = "";
