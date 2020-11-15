@@ -23,27 +23,19 @@ static const char *const SPLIT = " ";
 using namespace std;
 namespace proxies {
     namespace utils {
-        static void copyBytes(uint8_t *from, uint8_t *to, int size) {
-            for (int i = 0; i < size; i++) {
-                *(to + i) = *(from + i);
-            }
+        static void copyBytes(const uint8_t *from, uint8_t *to, int size) {
+            for (int i = 0; i < size; i++) { *(to + i) = *(from + i); }
         }
-        static void copyBytes(uint8_t *from, int fromPos, uint8_t *to, int toPos, int size) {
-            for (int i = 0; i < size; i++) {
-                *(to + i + toPos) = from[i + fromPos];
-            }
+        static void copyBytes(const uint8_t *from, int fromPos, uint8_t *to, int toPos, int size) {
+            for (int i = 0; i < size; i++) { *(to + i + toPos) = from[i + fromPos]; }
         }
         static void copyBytes(const string str, int fromPos, uint8_t *to, int toPos, int size) {
             const char *from = str.c_str();
-            for (int i = 0; i < size; i++) {
-                *(to + i + toPos) = from[i + fromPos];
-            }
+            for (int i = 0; i < size; i++) { *(to + i + toPos) = from[i + fromPos]; }
         }
-        static bool equalBytes(uint8_t *from, uint8_t *to, int size) {
+        static bool equalBytes(const uint8_t *from, const uint8_t *to, int size) {
             for (int i = 0; i < size; i++) {
-                if (*(to + i) != *(from + i)) {
-                    return false;
-                };
+                if (*(to + i) != *(from + i)) { return false; };
             }
             return true;
         }
@@ -63,9 +55,7 @@ namespace proxies {
                 bool exits = false;
                 fstream fileStream;
                 fileStream.open(path, ios::in);
-                if (fileStream) {
-                    exits = true;
-                }
+                if (fileStream) { exits = true; }
                 fileStream.close();
                 return exits;
             }
@@ -92,9 +82,7 @@ namespace proxies {
             if (!ec && result == 0) {
                 string log;
                 while (getline(is, log)) {
-                    if (!resultStr.empty()) {
-                        resultStr += "\n";
-                    }
+                    if (!resultStr.empty()) { resultStr += "\n"; }
 
                     resultStr += log;
                 }
@@ -102,9 +90,7 @@ namespace proxies {
             }
             string log;
             while (getline(error, log)) {
-                if (!errorStr.empty()) {
-                    errorStr += "\n";
-                }
+                if (!errorStr.empty()) { errorStr += "\n"; }
                 errorStr += log;
             }
             is.close();
