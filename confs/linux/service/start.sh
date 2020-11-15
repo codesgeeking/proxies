@@ -3,6 +3,7 @@ scriptDir=$(
   cd $(dirname $0)
   pwd
 )
+ulimit -n 65000
 cp -f ${scriptDir}/proxies /etc/init.d/
 chmod +x /etc/init.d/proxies
 unamestr=$(uname -a | tr 'A-Z' 'a-z')
