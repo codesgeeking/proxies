@@ -126,7 +126,6 @@ void Session::closeClient(std::function<void()> completeHandler) {
 }
 void Session::closeServer(std::function<void()> completeHandler) {
     boost::system::error_code ec;
-    proxySock.next_layer().shutdown(boost::asio::socket_base::shutdown_both, ec);
     proxySock.async_shutdown([=](const boost::system::error_code &error) {
         boost::system::error_code ec;
         Logger::traceId = this->id;
