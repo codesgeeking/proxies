@@ -1,0 +1,40 @@
+cmake_minimum_required(VERSION 3.11)
+project(proxies)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lpthread -Wall -g")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Os")
+
+
+if (DEFINED ENV{OPENSSL_ROOT_DIR})
+    set(OPENSSL_ROOT_DIR $ENV{OPENSSL_ROOT_DIR})
+endif ()
+if (OPENSSL_ROOT_DIR)
+    set(OPENSSL_INCLUDE_DIR ${OPENSSL_ROOT_DIR}/include)
+    if (CMAKE_HOST_APPLE)
+        set(OPENSSL_LIBRARIES ${OPENSSL_ROOT_DIR}/lib/libssl.dylib ${OPENSSL_ROOT_DIR}/lib/libcrypto.dylib)
+    else (CMAKE_HOST_APPLE)
+        set(OPENSSL_LIBRARIES ${OPENSSL_ROOT_DIR}/lib/libssl.so ${OPENSSL_ROOT_DIR}/lib/libcrypto.so)
+    endif ()
+else ()
+    find_package(OpenSSL 1.1.0 REQUIRED)
+endif ()
+find_package(Boost 1.66.0 REQUIRED COMPONENTS system filesystem thread)
+
+include_directories(${Boost_INCLUDE_DIR})
+include_directories(${OPENSSL_INCLUDE_DIR})
+message("${OPENSSL_INCLUDE_DIR}")
+message("${OPENSSL_LIBRARIES}")
+message("${Boost_INCLUDE_DIR}")
+message("${Boost_LIBRARIES}")
+
+include_directories(src/core)
+file(GLOB_RECURSE SOURCE_FILES src/core/*.cpp)
+message("${SOURCE_FILES}")
+message("${SOURCE_COMMON_FILES}")
+add_executable(proxies src/main.cpp ${SOURCE_FILES} ${SOURCE_COMMON_FILES})
+target_link_libraries(proxies ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES})
+
+
+include(GNUInstallDirs)
+install(TARGETS proxies DESTINATION bin)
