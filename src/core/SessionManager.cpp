@@ -9,7 +9,7 @@ static mutex monitorLock;
 static mutex statsLock;
 
 Session *SessionManager::addNewSession(tcp::socket &socket, proxies::Config &config,
-                                             StreamTunnel *tunnel) {
+                                       StreamTunnel *tunnel) {
     Session *session = new Session(++id, socket, config, tunnel);
     auto theId = session->id;
     Logger::traceId = theId;
@@ -82,7 +82,8 @@ SessionManager::~SessionManager() {
 
 void SessionManager::monitorSession() {
     auto now = proxies::utils::now();
-    int timout = proxies::Config::INSTANCE.soTimeout;
+    int soTimeout = proxies::Config::INSTANCE.soTimeout;
+    int conTimeout = proxies::Config::INSTANCE.conTimeout;
     set<uint64_t> closedIds;
     {
         lock_guard<mutex> monitorLockGuard(monitorLock);
@@ -98,13 +99,13 @@ void SessionManager::monitorSession() {
             speeds[tunnelId].first += session->readTunnelTime;
             speeds[tunnelId].second += session->readTunnelSize + session->writeTunnelSize;
             bool noRead = session->lastReadTunnelTime == 0
-                                  ? (now - session->begin >= timout)
-                                  : (now - session->lastReadTunnelTime >= timout);
+                                  ? (now - session->begin >= soTimeout)
+                                  : (now - session->lastReadTunnelTime >= soTimeout);
             bool noWrite = session->lastWriteTunnelTime == 0
-                                   ? (now - session->begin >= timout)
-                                   : (now - session->lastWriteTunnelTime >= timout);
+                                   ? (now - session->begin >= soTimeout)
+                                   : (now - session->lastWriteTunnelTime >= soTimeout);
             bool connectTimeout = session->stage == Session::STAGE::CONNECTING
-                                          ? (now - session->begin >= timout)
+                                          ? (now - session->begin >= conTimeout)
                                           : false;
             bool closed = session->stage == Session::STAGE::DETROYED;
             if (closed) {

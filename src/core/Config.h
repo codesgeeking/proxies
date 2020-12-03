@@ -24,7 +24,8 @@ namespace proxies {
     class Config {
     public:
         static Config INSTANCE;
-        int soTimeout = 10000;
+        int soTimeout = 60000;
+        int conTimeout = 10000;
         int logLevel = 2;
         int parallel = 16;
         vector<StreamTunnel *> tunnels;
@@ -40,12 +41,14 @@ namespace proxies {
                 try {
                     read_json(configPath, tree);
                 } catch (json_parser_error e) {
-                    Logger::ERROR << " parse config file " + configPath + " error!" << e.message() << END;
+                    Logger::ERROR << " parse config file " + configPath + " error!" << e.message()
+                                  << END;
                     exit(1);
                 }
                 this->logLevel = stoi(tree.get("log", to_string(this->logLevel)));
                 Logger::LEVEL = this->logLevel;
                 this->soTimeout = stoi(tree.get("so_timeout", to_string(this->soTimeout)));
+                this->conTimeout = stoi(tree.get("connect_timeout", to_string(this->conTimeout)));
                 this->parallel = stoi(tree.get("parallel", to_string(this->parallel)));
 
                 auto tunnelNodes = tree.get_child("tunnels");

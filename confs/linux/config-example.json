@@ -9,7 +9,8 @@
       "password": "password1"
     }
   ],
-  "so_timeout": 10000,
+  "connect_timeout": 10000,
+  "so_timeout": 60000,
   "parallel": 16,
-  "log":0
+  "log": 0
 }
