@@ -14,18 +14,10 @@ void startServer(const string &confPath) {
     server.start();
 }
 
-bool serviceScript(const string confPath, const string op) {
-    string error;
-    string result;
-    bool success = false;
-    success = proxies::utils::exec("sh " + confPath + "/service/" + op + ".sh", result, error);
-    if (success) {
-        Logger::INFO << result << END;
-    } else {
-        Logger::ERROR << error << END;
-    }
-    return success;
+void serviceScript(const string confPath, const string op) {
+    proxies::utils::exec("sh " + confPath + "/service/" + op + ".sh");
 }
+
 
 int main(int argc, char *argv[]) {
     bool inputConfigPath = false;
@@ -35,9 +27,7 @@ int main(int argc, char *argv[]) {
         inputConfigPath = true;
     } else {
         for (auto path : availablePaths) {
-            if (proxies::utils::file::exit(path)) {
-                confPath = path;
-            }
+            if (proxies::utils::file::exit(path)) { confPath = path; }
         }
     }
     if (confPath.empty()) {
@@ -65,9 +55,8 @@ int main(int argc, char *argv[]) {
             if (serviceOP == "start" || serviceOP == "stop") {
                 serviceScript(confPath, serviceOP);
             } else if (serviceOP == "restart") {
-                if (serviceScript(confPath, "stop")) {
-                    serviceScript(confPath, "start");
-                }
+                serviceScript(confPath, "stop");
+                serviceScript(confPath, "start");
             } else {
                 Logger::ERROR << "not support command" << END;
             }

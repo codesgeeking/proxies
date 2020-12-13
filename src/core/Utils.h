@@ -97,7 +97,13 @@ namespace proxies {
             error.close();
             return success;
         }
-
+        static bool exec(const string &command) {
+            std::error_code ec;
+            int result = boost::process::system(command, ec);
+            bool success = false;
+            if (!ec && result == 0) { success = true; }
+            return success;
+        }
         class Logger {
         private:
             uint32_t level = 0;
