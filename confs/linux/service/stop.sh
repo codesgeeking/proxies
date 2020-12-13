@@ -1,17 +1,11 @@
-set -e
+#!/bin/sh
 scriptDir=$(
   cd $(dirname $0)
   pwd
 )
-cp -f ${scriptDir}/proxies /etc/init.d/
-chmod +x /etc/init.d/proxies
-unamestr=$(uname -a | tr 'A-Z' 'a-z')
-type=""
-if [ "$(echo "$unamestr" | grep ubuntu)" != "" ]; then
-  systemctl daemon-reload
-  service proxies stop
-  update-rc.d -f proxies remove
-  systemctl daemon-reload
-  type="ubuntu"
-fi
-echo "proxies service stop success in $type!"
+cp -f ${scriptDir}/proxies.service /usr/lib/systemd/system/proxies.service
+systemctl daemon-reload  
+systemctl stop proxies  
+systemctl disable proxies  
+sleep 3s
+systemctl status proxies 
