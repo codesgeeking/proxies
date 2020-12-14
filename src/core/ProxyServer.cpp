@@ -61,7 +61,7 @@ bool resolveRemoteAddr(StreamTunnel *tunnel) {
         count++;
         boost::system::error_code error;
         ipIt = slv.resolve(qry, error);
-        success = !error.failed();
+        success = !error;
         if (!success) {
             Logger::ERROR << "resolve remoteAddr" << remoteAddr << "failed, try time" << count++
                           << error.message() << END;

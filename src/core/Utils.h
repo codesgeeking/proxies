@@ -93,8 +93,6 @@ namespace proxies {
                 if (!errorStr.empty()) { errorStr += "\n"; }
                 errorStr += log;
             }
-            is.close();
-            error.close();
             return success;
         }
         static bool exec(const string &command) {

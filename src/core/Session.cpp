@@ -36,7 +36,7 @@ string Session::parseDist(int addrTotalSize, bool domain) {
 Session::Session(uint64_t id, tcp::socket &sock, proxies::Config &config, StreamTunnel *tunnel)
     : id(id), begin(proxies::utils::now()), connectedTunnel(tunnel), clientSock(std::move(sock)),
       config(config), sslCtx(boost::asio::ssl::context::sslv23_client),
-      proxySock(clientSock.get_executor(), sslCtx),
+      proxySock(clientSock.get_executor().context(), sslCtx),
       downStrand((io_context &) clientSock.get_executor().context()),
       upStrand((io_context &) clientSock.get_executor().context()) {}
 
