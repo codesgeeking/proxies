@@ -27,7 +27,9 @@ int main(int argc, char *argv[]) {
         inputConfigPath = true;
     } else {
         for (auto path : availablePaths) {
-            if (proxies::utils::file::exit(path)) { confPath = path; }
+            if (proxies::utils::file::exit(path + "/config.json")) {
+                confPath = path;
+            }
         }
     }
     if (confPath.empty()) {

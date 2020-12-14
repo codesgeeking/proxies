@@ -51,7 +51,9 @@ void SessionManager::stats() {
         for (auto it = speeds.begin(); it != speeds.end(); it++) {
             Logger::traceId = 0;
             double speed = 0;
-            if (it->second.first != 0) { speed = it->second.second * 1.0 / it->second.first; }
+            if (it->second.first != 0) {
+                speed = it->second.second * 1.0 / it->second.first;
+            }
             Logger::INFO << "tunnel" << it->first << "speed" << speed << END;
         }
     }
@@ -60,7 +62,9 @@ void SessionManager::stats() {
 void SessionManager::scheduleStats() {
     statTimer.expires_from_now(boost::posix_time::seconds(5));
     statTimer.async_wait([&](boost::system::error_code ec) {
-        if (id > 0) { this->stats(); }
+        if (id > 0) {
+            this->stats();
+        }
         this->scheduleStats();
     });
 }
@@ -68,7 +72,9 @@ void SessionManager::scheduleStats() {
 void SessionManager::scheduleMonitor() {
     sessionTimer.expires_from_now(boost::posix_time::seconds(1));
     sessionTimer.async_wait([&](boost::system::error_code ec) {
-        if (id > 0) { this->monitorSession(); }
+        if (id > 0) {
+            this->monitorSession();
+        }
         this->scheduleMonitor();
     });
 }
@@ -95,7 +101,9 @@ void SessionManager::monitorSession() {
             Logger::traceId = session->id;
 
             auto tunnelId = session->connectedTunnel->id();
-            if (speeds.find(tunnelId) == speeds.end()) { speeds[tunnelId] = {0, 0}; }
+            if (speeds.find(tunnelId) == speeds.end()) {
+                speeds[tunnelId] = {0, 0};
+            }
             speeds[tunnelId].first += session->readTunnelTime;
             speeds[tunnelId].second += session->readTunnelSize + session->writeTunnelSize;
             bool noRead = session->lastReadTunnelTime == 0
@@ -119,5 +127,7 @@ void SessionManager::monitorSession() {
             }
         }
     }
-    for (auto it = closedIds.begin(); it != closedIds.end(); it++) { destroySession(*it); }
+    for (auto it = closedIds.begin(); it != closedIds.end(); it++) {
+        destroySession(*it);
+    }
 }

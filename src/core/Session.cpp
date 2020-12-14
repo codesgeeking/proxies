@@ -38,7 +38,9 @@ Session::Session(uint64_t id, tcp::socket &sock, proxies::Config &config, Stream
       config(config), sslCtx(boost::asio::ssl::context::sslv23_client),
       proxySock(clientSock.get_executor().context(), sslCtx),
       downStrand((io_context &) clientSock.get_executor().context()),
-      upStrand((io_context &) clientSock.get_executor().context()) {}
+      upStrand((io_context &) clientSock.get_executor().context()),
+      readProxyDelayTimer(clientSock.get_executor().context()),
+      writeProxyDelayTimer(clientSock.get_executor().context()) {}
 
 void Session::start() {
     boost::system::error_code error;
@@ -142,6 +144,8 @@ void Session::shutdown() {
     if (stage == CONNECTING || stage == CONNECTED) {
         long begin = proxies::utils::now();
         stage = DETROYING;
+        readProxyDelayTimer.cancel();
+        writeProxyDelayTimer.cancel();
         stageLock.unlock();
         closeClient([=] {
             closeServer([=] {
@@ -184,33 +188,66 @@ void Session::readClient(const string &tag, size_t size, std::function<void()> c
                                  }
                              }));
 }
+
+void Session::writeProxy(size_t writeSize) {
+    auto writeFunc = [=]() { writeProxy("writeProxy", writeSize, [=]() { readClient(); }); };
+    if (this->writeProxyBegin == 0) {
+        this->writeProxyBegin = proxies::utils::now();
+    }
+    uint64_t maxSize = (proxies::utils::now() - this->writeProxyBegin) / 1000.0 * limitSpeed;
+    if (writeTunnelSize > maxSize) {
+        long sleep = max(1L, (long) ((writeTunnelSize - maxSize) * 1.0 / limitSpeed));
+        writeProxyDelayTimer.expires_from_now(boost::posix_time::seconds(sleep));
+        writeProxyDelayTimer.async_wait([=](boost::system::error_code ec) {
+            // Logger::INFO << "sleep" << sleep << "maxSize" << maxSize << "writeTunnelSize"
+            //              << writeTunnelSize << END;
+            writeFunc();
+        });
+    } else {
+        writeFunc();
+    }
+}
 void Session::readProxy() {
-    long begin = proxies::utils::now();
-    proxySock.async_read_some(buffer(readProxyBuffer, sizeof(uint8_t) * bufferSize),
-                              downStrand.wrap([=](boost::system::error_code error, size_t size) {
-                                  Logger::traceId = this->id;
-                                  if (!error) {
-                                      lastReadTunnelTime = proxies::utils::now();
-                                      readTunnelTime += proxies::utils::now() - begin;
-                                      readTunnelSize += size;
-                                      proxies::utils::copyBytes(readProxyBuffer, writeClientBuffer,
-                                                                size);
-                                      writeClient(size);
-                                  } else {
-                                      processError(error, "readProxy");
-                                  }
-                              }));
+    auto readFunc = [=]() {
+        proxySock.async_read_some(
+                buffer(readProxyBuffer, sizeof(uint8_t) * bufferSize),
+                downStrand.wrap([=](boost::system::error_code error, size_t size) {
+                    Logger::traceId = this->id;
+                    if (!error) {
+                        lastReadTunnelTime = proxies::utils::now();
+                        readTunnelTime += proxies::utils::now() - begin;
+                        readTunnelSize += size;
+                        proxies::utils::copyBytes(readProxyBuffer, writeClientBuffer, size);
+                        writeClient(size);
+                    } else {
+                        processError(error, "readProxy");
+                    }
+                }));
+    };
+    if (this->readProxyBegin == 0) {
+        this->readProxyBegin = proxies::utils::now();
+    }
+    uint64_t maxSize = (proxies::utils::now() - this->readProxyBegin) / 1000.0 * limitSpeed;
+    if (readTunnelSize > maxSize) {
+        long sleep = max(1L, (long) ((readTunnelSize - maxSize) * 1.0 / limitSpeed));
+        readProxyDelayTimer.expires_from_now(boost::posix_time::seconds(sleep));
+        readProxyDelayTimer.async_wait([=](boost::system::error_code ec) {
+            // Logger::INFO << "sleep" << sleep << "maxSize" << maxSize << "readTunnelSize"
+            //              << readTunnelSize << END;
+            readFunc();
+        });
+    } else {
+        readFunc();
+    }
 }
 
 void Session::processError(const boost::system::error_code &error, const string &TAG) {
     bool isEOF = error.category() == error::misc_category && error == error::misc_errors::eof;
     bool isCancled = error == error::operation_aborted;
-    if (!isCancled && !isEOF) { Logger::ERROR << TAG << error.message() << END; }
+    if (!isCancled && !isEOF) {
+        Logger::ERROR << TAG << error.message() << END;
+    }
     shutdown();
-}
-
-void Session::writeProxy(size_t writeSize) {
-    writeProxy("writeProxy", writeSize, [=]() { readClient(); });
 }
 
 void Session::writeProxy(const string &tag, size_t writeSize,

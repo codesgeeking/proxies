@@ -10,7 +10,7 @@
 class Session {
 public:
     enum STAGE { CONNECTING, CONNECTED, DETROYING, DETROYED };
-    static const uint32_t bufferSize = 1024;
+    static const uint32_t bufferSize = 4096;
 
     Session(uint64_t id, tcp::socket &sock, proxies::Config &config, StreamTunnel *tunnel);
 
@@ -19,6 +19,8 @@ public:
     uint64_t id;
     uint16_t port = 0;
     uint64_t begin = 0L;
+    uint64_t writeProxyBegin = 0L;
+    uint64_t readProxyBegin = 0L;
     uint64_t lastReadTunnelTime = 0;
     uint64_t readTunnelTime = 0;
     uint64_t readTunnelSize = 0;
@@ -37,6 +39,7 @@ public:
     int live() const;
 
 private:
+    long limitSpeed = 1 * 1024 * 1024;
     mutex stageLock;
     tcp::socket clientSock;
     proxies::Config &config;
@@ -49,6 +52,9 @@ private:
     uint8_t readProxyBuffer[bufferSize];
     io_context::strand downStrand;
     io_context::strand upStrand;
+    boost::asio::deadline_timer readProxyDelayTimer;
+    boost::asio::deadline_timer writeProxyDelayTimer;
+
     void readClient();
     void readClientMax(const string &tag, size_t maxSize,
                        std::function<void(size_t size)> completeHandler);
