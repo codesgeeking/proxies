@@ -16,34 +16,26 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build
-        working-directory: ${{github.workspace}}/build
         shell: bash
         # Execute the build.  You can specify a specific target with "--target <NAME>"
-        run: docker run --rm  codesgeeking/boost -v `pwd`:/root/codes /bin/bash -c "pwd && ls"
-  # docker:
-  #   # The type of runner that the job will run on
-  #   runs-on: ubuntu-latest
-  #   # Steps represent a sequence of tasks that will be executed as part of the job
-  #   steps:
-  #     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-  #     - uses: actions/checkout@v2
-  #     # Runs a single command using the runners shell
-  #     - name: Login to Docker Hub
-  #       uses: docker/login-action@v1
-  #       with:
-  #         username: ${{ secrets.DOCKER_HUB_USERNAME }}
-  #         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-  #     - name: Set up Docker Buildx
-  #       id: buildx
-  #       uses: docker/setup-buildx-action@v1
-  #     - name: Build and push
-  #       id: docker_build
-  #       uses: docker/build-push-action@v2
-  #       with:
-  #         context: ./
-  #         file: ./Dockerfile
-  #         platforms: linux/amd64,linux/arm64
-  #         push: true
-  #         tags: codesgeeking/proxies
-  #     - name: Image digest
-  #       run: echo ${{ steps.docker_build.outputs.digest }}
+        run: docker pull codesgeeking/boost && docker run --rm  -v `pwd`:/root/codes codesgeeking/boost /bin/bash -c "sh install.sh /root/code/release"
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: ./
+          file: ./docker/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: codesgeeking/proxies
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
