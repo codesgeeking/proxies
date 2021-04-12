@@ -19,7 +19,7 @@ jobs:
         working-directory: ${{github.workspace}}/build
         shell: bash
         # Execute the build.  You can specify a specific target with "--target <NAME>"
-        run: docker run --rm  codesgeeking/boost -v `pwd`:/root/codes /bin/bash install.sh
+        run: docker run --rm  codesgeeking/boost -v `pwd`:/root/codes /bin/bash "cd /root/code && sh install.sh"
   # docker:
   #   # The type of runner that the job will run on
   #   runs-on: ubuntu-latest
