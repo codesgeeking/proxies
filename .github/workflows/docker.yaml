@@ -18,7 +18,7 @@ jobs:
       - name: Build
         shell: bash
         # Execute the build.  You can specify a specific target with "--target <NAME>"
-        run: docker pull codesgeeking/boost && docker run --rm  -v `pwd`:/root/codes codesgeeking/boost /bin/bash -c "sh install.sh /root/code/release"
+        run: docker pull codesgeeking/boost && docker run --rm  -v `pwd`:/root/codes codesgeeking/boost /bin/bash -c "sh install.sh `pwd`/release"
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Login to Docker Hub
         uses: docker/login-action@v1
