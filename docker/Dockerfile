@@ -2,7 +2,7 @@ FROM codesgeeking/boost
 
 USER root
 
-ADD ld.so.conf /etc/ld.so.conf
+RUN echo "/usr/local/lib" >> /etc/ld.so.conf
 
 ADD release/etc/proxies /etc/proxies
 
